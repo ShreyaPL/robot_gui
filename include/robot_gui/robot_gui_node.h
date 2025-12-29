@@ -37,6 +37,8 @@ private:
     std::string robot_info_text;
     bool have_cmd_vel;
     geometry_msgs::Twist last_cmd_vel;
+    double lin_step;
+    double ang_step;
 
     //Command Velocities
     double target_lin_x;
