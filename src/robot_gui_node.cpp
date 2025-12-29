@@ -44,11 +44,11 @@ void RobotGuiNode::run() {
         cvui::text(frame, 20, 15, "Robot GUI", 0.6, 0xFFFFFF);
 
         //General Info Area
-        cvui::window(frame, 20, 40, 380, 180, "General Info (/robot_info)");
+        cvui::window(frame, 20, 40, 380, 180, "General Info");
         cvui::printf(frame, 35, 85, 0.45, 0xFFFFFF, "%s", robot_info_text.c_str());
 
         //Teleop Buttons
-        cvui::window(frame, 20, 280, 500, 170, "Teleoperation (/cooper_1/cmd_vel)");
+        cvui::window(frame, 20, 280, 500, 170, "Teleoperation");
 
         //button sizes
         const int bw = 110;
@@ -84,7 +84,19 @@ void RobotGuiNode::run() {
             target_ang_z = 0.0;
         }
 
-        cvui::printf(frame, 40, 465, 0.50, 0xFFFFFF, "Commanding: lin.x=%.2f  ang.z=%.2f", target_lin_x, target_ang_z);
+        //Current Velocities
+        const int vel_y = 500;
+        const int vel_w = 275;
+        const int vel_h = 90;
+
+        double shown_lin = have_cmd_vel ? last_cmd_vel.linear.x : target_lin_x;
+        double shown_ang = have_cmd_vel ? last_cmd_vel.angular.z : target_ang_z;
+
+        cvui::window(frame, 20, vel_y, vel_w, vel_h, "Linear Velocity");
+        cvui::printf(frame, 40, vel_y+55, 0.60, 0xFFFFFF, "%.2f m/s", shown_lin);
+
+        cvui::window(frame, 305, vel_y, vel_w, vel_h, "Angular Velocity");
+        cvui::printf(frame, 325, vel_y+55, 0.60, 0xFFFFFF, "%.2f rad/s", shown_ang);
 
         //Publish continuously
         geometry_msgs::Twist cmd;
