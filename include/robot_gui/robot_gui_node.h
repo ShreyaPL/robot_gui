@@ -7,6 +7,7 @@
 #include <ros/ros.h>
 #include <std_msgs/String.h>
 #include <geometry_msgs/Twist.h>
+#include <nav_msgs/Odometry.h>
 
 #include <opencv2/opencv.hpp>
 // #include <robot_gui/cvui.h>
@@ -21,22 +22,29 @@ public:
 private:
     //callbacks
     void robotInfoCb(const std_msgs::String::ConstPtr & msg);                            
-    void cmdVelCb(const geometry_msgs::Twist::ConstPtr & msg);                                                                                                                                                                                                                      
+    void cmdVelCb(const geometry_msgs::Twist::ConstPtr & msg);
+    void odomCb(const nav_msgs::Odometry::ConstPtr &msg);                                                                                                                                                                                                                    
 
     //helpers
     static std::string fmtDouble(double v, int prec = 2);
 
     //ROS
     ros::NodeHandle n;
+
     ros::Subscriber sub_robot_info;
     ros::Subscriber sub_cmd_vel;
+    ros::Subscriber sub_odom;
 
     ros::Publisher pub_cmd_vel;
 
     //State for display
     std::string robot_info_text;
-    bool have_cmd_vel;
     geometry_msgs::Twist last_cmd_vel;
+    nav_msgs::Odometry last_odom;
+
+    bool have_cmd_vel;
+    bool have_odom;
+
     double lin_step;
     double ang_step;
 
