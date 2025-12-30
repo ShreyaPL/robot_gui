@@ -10,13 +10,13 @@
 RobotGuiNode::RobotGuiNode(ros::NodeHandle &nh)
     :n(nh),
     robot_info_text("(no /robot_info received yet)"),
-    frame(cv::Size(600, 950), CV_8UC3),
+    frame(cv::Size(420, 960), CV_8UC3),
     window_name("Robot Info GUI"),
     lin_step(0.05),
     ang_step(0.10),
     target_lin_x(0.0),
     target_ang_z(0.0),
-    distance_text("Press Get Distance"),
+    distance_text("0.00"),
     have_cmd_vel(false),
     have_odom(false),
     publish_hz(30){
@@ -55,126 +55,151 @@ void RobotGuiNode::run() {
 
         frame = cv::Scalar(49, 52, 49);
 
-        //header
-        cvui::text(frame, 20, 15, "Robot GUI", 0.6, 0xFFFFFF);
+        // Layout constants
+        const int FRAME_W = frame.cols;
+        const int FRAME_H = frame.rows;
 
-        //General Info Area
-        cvui::window(frame, 20, 40, 560, 180, "General Info");
-        cvui::printf(frame, 35, 85, 0.45, 0xFFFFFF, "%s", robot_info_text.c_str());
+        const int M   = 20;   // margin
+        const int GAP = 10;
+        const int W   = FRAME_W - 2 * M;
 
-        //Teleop Buttons
-        const int tele_x = 20;
-        const int tele_y = 280;
-        const int tele_w = 560;
-        const int tele_h = 170;
+        const int INFO_Y = 40;
+        const int INFO_H = 170;
 
-        cvui::window(frame, tele_x, tele_y, tele_w, tele_h, "Teleoperation");
+        const int TELE_Y = INFO_Y + INFO_H + GAP;
+        const int TELE_H = 260;
 
-        //button sizes
-        const int bw = 110;
+        const int VEL_Y  = TELE_Y + TELE_H + GAP;
+        const int VEL_H  = 80;
+
+        const int POS_Y  = VEL_Y + VEL_H + GAP;
+        const int POS_H  = 170;
+
+        const int DIST_Y = POS_Y + POS_H + GAP;
+        const int DIST_H = 140;
+
+        //Header
+        cvui::text(frame, M, 15, "Robot GUI", 0.6, 0xFFFFFF);
+
+        //General Info
+        cvui::window(frame, M, INFO_Y, W, INFO_H, "Info");
+        cvui::printf(frame, M + 15, INFO_Y + 45, 0.45, 0xFFFFFF, "%s", robot_info_text.c_str());
+
+        //Teleop
+        cvui::window(frame, M, TELE_Y, W, TELE_H, "Teleoperation");
+
+        const int bw = 90;
         const int bh = 45;
+        const int gap_btn = 12;
 
-        // center anchor
-        const int cx = tele_x + tele_w / 2;
-        const int cy = tele_y + tele_h / 2;
+        //canter anchor
+        const int cx = M + W/2;
+        const int cy = TELE_Y + 125;
 
         //Forward
-        if (cvui::button(frame, cx - bw/2, cy - (bh+10), bw, bh, "Forward")) {
+        if (cvui::button(frame, cx - bw/2, cy - (bh + gap_btn), bw, bh, "Forward")){
             target_lin_x += lin_step;
         }
 
-        //Back
-        if (cvui::button(frame, cx - bw/2, cy + 10, bw, bh, "Back")) {
-            target_lin_x -= lin_step;
-        }
-
-        // Left
-        if (cvui::button(frame, cx - (bw + 10), cy - bh/2, bw, bh, "Left")) {
+        //Left
+        if (cvui::button(frame, cx - bw/2 - (bw + gap_btn), cy, bw, bh, "Left")) {
             target_ang_z += ang_step;
         }
 
+        //Stop
+        if (cvui::button(frame, cx - bw/2, cy, bw, bh, "Stop")) {
+            target_lin_x = 0.0; target_ang_z = 0.0;
+        }
+
         //Right
-        if (cvui::button(frame, cx + 10, cy - bh/2, bw, bh, "Right")) {
+        if (cvui::button(frame, cx - bw/2 + bw + gap_btn, cy, bw, bh, "Right")){
             target_ang_z -= ang_step;
         }
 
-        //Stop
-        if (cvui::button(frame, cx - bw/2, cy - bh/2, bw, bh, "STOP")) {
-            target_lin_x = 0.0;
-            target_ang_z = 0.0;
+        //Backward
+        if (cvui::button(frame, cx - bw/2, cy + (bh + gap_btn), bw, bh, "Backward")) {
+            target_lin_x -= lin_step;
         }
 
         //Current Velocities
-        const int vel_y = 500;
-        const int vel_w = 275;
-        const int vel_h = 90;
-
-        double shown_lin = have_cmd_vel ? last_cmd_vel.linear.x : target_lin_x;
+        double shown_lin = have_cmd_vel ? last_cmd_vel.linear.x  : target_lin_x;
         double shown_ang = have_cmd_vel ? last_cmd_vel.angular.z : target_ang_z;
 
-        cvui::window(frame, 20, vel_y, vel_w, vel_h, "Linear Velocity");
-        cvui::printf(frame, 40, vel_y+55, 0.60, 0xFFFFFF, "%.2f m/s", shown_lin);
+        const int vel_w = (W - GAP) / 2;
 
-        cvui::window(frame, 305, vel_y, vel_w, vel_h, "Angular Velocity");
-        cvui::printf(frame, 325, vel_y+55, 0.60, 0xFFFFFF, "%.2f rad/s", shown_ang);
+        cvui::window(frame, M, VEL_Y, vel_w, VEL_H, "Linear velocity:");
+        cvui::printf(frame, M + 15, VEL_Y + 55, 0.65, 0xFFFFFF, "%.2f m/sec", shown_lin);
 
-        //Odometry Position
-        const int pos_y = 610;
-        const int pos_w = 180;
-        const int pos_h = 110;
+        cvui::window(frame, M + vel_w + GAP, VEL_Y, vel_w, VEL_H, "Angular velocity:");
+        cvui::printf(frame, M + vel_w + GAP + 15, VEL_Y + 55, 0.65, 0xFFFFFF, "%.2f rad/sec", shown_ang);
 
-        double x = 0.0, y = 0.0, z = 0.0;
-        if(have_odom){
-            x = last_odom.pose.pose.position.x;
-            y = last_odom.pose.pose.position.y;
-            z = last_odom.pose.pose.position.z;
+        //Robot Position
+        cvui::window(frame, M, POS_Y, W, POS_H, "Robot position based off odometry");
+
+        double px = 0.0, py = 0.0, pz = 0.0;
+        if (have_odom) {
+        px = last_odom.pose.pose.position.x;
+        py = last_odom.pose.pose.position.y;
+        pz = last_odom.pose.pose.position.z;
         }
 
-        //X
-        cvui::window(frame, 20, pos_y, pos_w, pos_h, "X");
-        cvui::printf(frame, 40,  pos_y + 70, 0.60, 0xFFFFFF, "%.2f", x);
+        const int inner_m = 10;
+        const int box_y   = POS_Y + 45;
+        const int box_h   = POS_H - 55;
+        const int box_w   = (W - 2*inner_m - 2*GAP) / 3;
 
-        //Y
-        cvui::window(frame, 210, pos_y, pos_w, pos_h, "Y");
-        cvui::printf(frame, 230, pos_y + 70, 0.60, 0xFFFFFF, "%.2f", y);
+        const int x1 = M + inner_m;
+        const int x2 = x1 + box_w + GAP;
+        const int x3 = x2 + box_w + GAP;
 
-        //Z
-        cvui::window(frame, 400, pos_y, pos_w, pos_h, "Z");
-        cvui::printf(frame, 420, pos_y + 70, 0.60, 0xFFFFFF, "%.2f", z);
+        cvui::window(frame, x1, box_y, box_w, box_h, "X");
+        cvui::printf(frame, x1 + 18, box_y + 75, 0.75, 0xFFFFFF, "%.2f", px);
 
-        if (!have_odom) {
-            cvui::text(frame, 20, pos_y + pos_h + 10, "Waiting for /cooper_1/odom ...", 0.45, 0xB0B0B0);
-        }
+        cvui::window(frame, x2, box_y, box_w, box_h, "Y");
+        cvui::printf(frame, x2 + 18, box_y + 75, 0.75, 0xFFFFFF, "%.2f", py);
 
-        // Distance Travelled Call
-        const int dist_y = 740;
-        cvui::window(frame, 20, dist_y, 560, 140, "Distance Travelled Call");
-        if (cvui::button(frame, 40, dist_y+50, 160, 45, "Get Distance")) {
+        cvui::window(frame, x3, box_y, box_w, box_h, "Z");
+        cvui::printf(frame, x3 + 18, box_y + 75, 0.75, 0xFFFFFF, "%.2f", pz);
+
+        //Distance Travelled
+        cvui::window(frame, M, DIST_Y, W, DIST_H, "Distance Travelled");
+
+        const int left_w  = 120;
+        const int right_w = W - left_w - GAP;
+
+        //Call/Reset
+        cvui::window(frame, M, DIST_Y + 35, left_w, DIST_H - 45, " ");
+
+        if (cvui::button(frame, M + 5, DIST_Y + 55, left_w - 10, 35, "Call")) {
             std_srvs::Trigger srv;
-            if (srv_get_distance.call(srv)) {
+            if (srv_get_distance.call(srv)){
                 distance_text = srv.response.message;
             }
             else{
-                distance_text = "Failed calling /get_distance";
+                distance_text = "ERR";
             }
         }
 
-        if (cvui::button(frame, 220, dist_y+50, 160, 45, "Reset Distance")) {
+        if (cvui::button(frame, M + 5, DIST_Y + 95, left_w - 10, 35, "Reset")) {
             std_srvs::Empty srv;
-            if (srv_reset_distance.call(srv)) {
+            if (srv_reset_distance.call(srv)){
                 distance_text = "0.00";
             }
             else{
-                distance_text = "Failed called /reset_distance";
+                distance_text = "ERR";
             }
         }
-        cvui::printf(frame, 40, dist_y + 110, 0.55, 0xFFFFFF, "Distance: %s", distance_text.c_str());
 
-        //Publish continuously
+        // Right panel
+        cvui::window(frame, M + left_w + GAP, DIST_Y + 35, right_w, DIST_H - 45, "Distance:");
+        cvui::printf(frame, M + left_w + GAP + 18, DIST_Y + 110, 1.00, 0xFFFFFF, "%s", distance_text.c_str());
+
+        //punlish geometry msg
         geometry_msgs::Twist cmd;
-        cmd.linear.x = target_lin_x;
+        cmd.linear.x  = target_lin_x;
         cmd.angular.z = target_ang_z;
         pub_cmd_vel.publish(cmd);
+
 
         //Render
         cvui::update();
