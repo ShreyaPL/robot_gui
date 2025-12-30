@@ -8,6 +8,8 @@
 #include <std_msgs/String.h>
 #include <geometry_msgs/Twist.h>
 #include <nav_msgs/Odometry.h>
+#include <std_srvs/Trigger.h>
+#include <std_srvs/Empty.h>
 
 #include <opencv2/opencv.hpp>
 // #include <robot_gui/cvui.h>
@@ -37,8 +39,13 @@ private:
 
     ros::Publisher pub_cmd_vel;
 
+    ros::ServiceClient srv_get_distance;
+    ros::ServiceClient srv_reset_distance;
+
     //State for display
     std::string robot_info_text;
+    std::string distance_text;
+    
     geometry_msgs::Twist last_cmd_vel;
     nav_msgs::Odometry last_odom;
 
