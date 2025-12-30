@@ -59,7 +59,7 @@ void RobotGuiNode::run() {
         const int FRAME_W = frame.cols;
         const int FRAME_H = frame.rows;
 
-        const int M   = 20;   // margin
+        const int M   = 15;   // margin
         const int GAP = 10;
         const int W   = FRAME_W - 2 * M;
 
@@ -67,13 +67,13 @@ void RobotGuiNode::run() {
         const int INFO_H = 170;
 
         const int TELE_Y = INFO_Y + INFO_H + GAP;
-        const int TELE_H = 260;
+        const int TELE_H = 220;
 
         const int VEL_Y  = TELE_Y + TELE_H + GAP;
         const int VEL_H  = 80;
 
         const int POS_Y  = VEL_Y + VEL_H + GAP;
-        const int POS_H  = 170;
+        const int POS_H  = 140;
 
         const int DIST_Y = POS_Y + POS_H + GAP;
         const int DIST_H = 140;
@@ -94,7 +94,7 @@ void RobotGuiNode::run() {
 
         //canter anchor
         const int cx = M + W/2;
-        const int cy = TELE_Y + 125;
+        const int cy = TELE_Y + 100;
 
         //Forward
         if (cvui::button(frame, cx - bw/2, cy - (bh + gap_btn), bw, bh, "Forward")){
@@ -143,34 +143,34 @@ void RobotGuiNode::run() {
         pz = last_odom.pose.pose.position.z;
         }
 
-        const int inner_m = 10;
+        const int inner_m = 5;
         const int box_y   = POS_Y + 45;
-        const int box_h   = POS_H - 55;
-        const int box_w   = (W - 2*inner_m - 2*GAP) / 3;
+        const int box_h   = POS_H - 75;
+        const int box_w   = ((W - 2*inner_m - 2*GAP) / 3) - 12;
 
         const int x1 = M + inner_m;
-        const int x2 = x1 + box_w + GAP;
-        const int x3 = x2 + box_w + GAP;
+        const int x2 = x1 + box_w + GAP + 6;
+        const int x3 = x2 + box_w + GAP + 6;
 
         cvui::window(frame, x1, box_y, box_w, box_h, "X");
-        cvui::printf(frame, x1 + 18, box_y + 75, 0.75, 0xFFFFFF, "%.2f", px);
+        cvui::printf(frame, x1 + 18, box_y + 35, 0.75, 0xFFFFFF, "%.2f", px);
 
         cvui::window(frame, x2, box_y, box_w, box_h, "Y");
-        cvui::printf(frame, x2 + 18, box_y + 75, 0.75, 0xFFFFFF, "%.2f", py);
+        cvui::printf(frame, x2 + 18, box_y + 35, 0.75, 0xFFFFFF, "%.2f", py);
 
         cvui::window(frame, x3, box_y, box_w, box_h, "Z");
-        cvui::printf(frame, x3 + 18, box_y + 75, 0.75, 0xFFFFFF, "%.2f", pz);
+        cvui::printf(frame, x3 + 18, box_y + 35, 0.75, 0xFFFFFF, "%.2f", pz);
 
         //Distance Travelled
-        cvui::window(frame, M, DIST_Y, W, DIST_H, "Distance Travelled");
+        cvui::window(frame, M + 10, DIST_Y, W - 20, DIST_H, "Distance Travelled");
 
         const int left_w  = 120;
-        const int right_w = W - left_w - GAP;
+        const int right_w = W - 20 - left_w - GAP;
 
         //Call/Reset
-        cvui::window(frame, M, DIST_Y + 35, left_w, DIST_H - 45, " ");
+        cvui::window(frame, M + 10, DIST_Y + 35, left_w, DIST_H - 45, " ");
 
-        if (cvui::button(frame, M + 5, DIST_Y + 55, left_w - 10, 35, "Call")) {
+        if (cvui::button(frame, M + 15, DIST_Y + 55, left_w - 10, 35, "Call")) {
             std_srvs::Trigger srv;
             if (srv_get_distance.call(srv)){
                 distance_text = srv.response.message;
@@ -180,7 +180,7 @@ void RobotGuiNode::run() {
             }
         }
 
-        if (cvui::button(frame, M + 5, DIST_Y + 95, left_w - 10, 35, "Reset")) {
+        if (cvui::button(frame, M + 15, DIST_Y + 95, left_w - 10, 35, "Reset")) {
             std_srvs::Empty srv;
             if (srv_reset_distance.call(srv)){
                 distance_text = "0.00";
@@ -191,8 +191,8 @@ void RobotGuiNode::run() {
         }
 
         // Right panel
-        cvui::window(frame, M + left_w + GAP, DIST_Y + 35, right_w, DIST_H - 45, "Distance:");
-        cvui::printf(frame, M + left_w + GAP + 18, DIST_Y + 110, 1.00, 0xFFFFFF, "%s", distance_text.c_str());
+        cvui::window(frame, M + 10 + left_w + GAP, DIST_Y + 35, right_w, DIST_H - 45, "Distance:");
+        cvui::printf(frame, M + 10 + left_w + GAP + 18, DIST_Y + 70, 1.00, 0xFFFFFF, "%s", distance_text.c_str());
 
         //punlish geometry msg
         geometry_msgs::Twist cmd;
