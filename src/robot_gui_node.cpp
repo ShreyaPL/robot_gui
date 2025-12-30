@@ -1,11 +1,27 @@
 #include "robot_gui/robot_gui_node.h"
 #include "geometry_msgs/Twist.h"
 #include "nav_msgs/Odometry.h"
+#include "robotinfo_msgs/RobotInfo10Fields.h"
 #include "std_srvs/Empty.h"
 #include "std_srvs/Trigger.h"
 
+#include <sstream>
+#include <vector>
+
 #define CVUI_IMPLEMENTATION
 #include "robot_gui/cvui.h"
+
+static std::vector<std::string> splitLines(const std::string& s) {
+    std::vector<std::string> lines;
+    std::istringstream iss(s);
+    std::string line;
+    while (std::getline(iss, line)) {
+        if (!line.empty() && line.back() == '\r') line.pop_back();
+        lines.push_back(line);
+    }
+    return lines;
+}
+
 
 RobotGuiNode::RobotGuiNode(ros::NodeHandle &nh)
     :n(nh),
@@ -34,8 +50,23 @@ RobotGuiNode::RobotGuiNode(ros::NodeHandle &nh)
     cvui::init(window_name.c_str());
     }
 
-void RobotGuiNode::robotInfoCb(const std_msgs::String::ConstPtr &msg){
-    robot_info_text = msg->data;
+void RobotGuiNode::robotInfoCb(const robotinfo_msgs::RobotInfo10Fields::ConstPtr &msg){
+    robot_info_text.clear();
+    auto addLine = [this](const std::string& s) {
+        if (s.empty()) return;
+        if (!robot_info_text.empty()) robot_info_text += "\n";
+        robot_info_text += s;
+    };
+    addLine(msg->data_field_01);
+    addLine(msg->data_field_02);
+    addLine(msg->data_field_03);
+    addLine(msg->data_field_04);
+    addLine(msg->data_field_05);
+    addLine(msg->data_field_06);
+    addLine(msg->data_field_07);
+    addLine(msg->data_field_08);
+    addLine(msg->data_field_09);
+    addLine(msg->data_field_10);
 }
 
 void RobotGuiNode::cmdVelCb(const geometry_msgs::Twist::ConstPtr &msg){
@@ -83,7 +114,20 @@ void RobotGuiNode::run() {
 
         //General Info
         cvui::window(frame, M, INFO_Y, W, INFO_H, "Info");
-        cvui::printf(frame, M + 15, INFO_Y + 45, 0.45, 0xFFFFFF, "%s", robot_info_text.c_str());
+
+        const int text_x = M + 15;
+        const int text_y = INFO_Y + 45;
+        const int line_h = 14;   // tweak spacing
+        const double font_scale = 0.45;
+
+        auto lines = splitLines(robot_info_text);
+        for (size_t i = 0; i < lines.size(); ++i) {
+            int y = text_y + static_cast<int>(i) * line_h;
+            
+            if (y > INFO_Y + INFO_H - 10) break;
+            cvui::text(frame, text_x, y, lines[i], font_scale, 0xFFFFFF);
+        }
+        // cvui::printf(frame, M + 15, INFO_Y + 45, 0.45, 0xFFFFFF, "%s", robot_info_text.c_str());
 
         //Teleop
         cvui::window(frame, M, TELE_Y, W, TELE_H, "Teleoperation");

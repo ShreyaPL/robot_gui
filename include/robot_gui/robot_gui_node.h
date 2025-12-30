@@ -10,6 +10,7 @@
 #include <nav_msgs/Odometry.h>
 #include <std_srvs/Trigger.h>
 #include <std_srvs/Empty.h>
+#include "robotinfo_msgs/RobotInfo10Fields.h"
 
 #include <opencv2/opencv.hpp>
 // #include <robot_gui/cvui.h>
@@ -23,7 +24,7 @@ public:
 
 private:
     //callbacks
-    void robotInfoCb(const std_msgs::String::ConstPtr & msg);                            
+    void robotInfoCb(const robotinfo_msgs::RobotInfo10Fields::ConstPtr & msg);                            
     void cmdVelCb(const geometry_msgs::Twist::ConstPtr & msg);
     void odomCb(const nav_msgs::Odometry::ConstPtr &msg);                                                                                                                                                                                                                    
 
@@ -45,7 +46,7 @@ private:
     //State for display
     std::string robot_info_text;
     std::string distance_text;
-    
+
     geometry_msgs::Twist last_cmd_vel;
     nav_msgs::Odometry last_odom;
 
